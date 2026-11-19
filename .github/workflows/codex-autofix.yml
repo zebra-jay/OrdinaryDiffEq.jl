@@ -40,10 +40,10 @@ jobs:
             for (const pr of prs) {
               if (pr.head.repo?.full_name !== `${fork.owner}/${fork.repo}`) continue;
 
-              const checks = await github.rest.checks.listForRef({
+              const checkRuns = await github.paginate(github.rest.checks.listForRef, {
                 ...upstream, ref: pr.head.sha, per_page: 100
               });
-              const failed = checks.data.check_runs.filter(
+              const failed = checkRuns.filter(
                 c => c.conclusion === "failure" || c.conclusion === "timed_out"
               );
               if (failed.length === 0) continue;
