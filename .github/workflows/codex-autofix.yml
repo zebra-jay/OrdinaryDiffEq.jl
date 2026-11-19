@@ -131,7 +131,9 @@ jobs:
         id: diff
         shell: bash
         run: |
-          git diff --binary > codex.patch
+          # Include new test/source files while keeping the Codex report out of the patch.
+          git add -N -- .
+          git diff --binary -- . ':!codex-summary.md' ':!codex.patch' > codex.patch
           if [ -s codex.patch ]; then
             echo "has_patch=true" >> "$GITHUB_OUTPUT"
           else
