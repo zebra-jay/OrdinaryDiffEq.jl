@@ -80,13 +80,22 @@ jobs:
 
   generate_patch:
     needs: detect
-    if: needs.detect.outputs.found == 'true' && secrets.OPENAI_API_KEY != ''
+    if: needs.detect.outputs.found == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: read
     outputs:
       has_patch: ${{ steps.diff.outputs.has_patch }}
     steps:
+      - name: Verify OpenAI API key is configured
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo "::error::Add OPENAI_API_KEY as a repository Actions secret."
+            exit 1
+          fi
+
       - name: Check out the exact failing PR commit
         uses: actions/checkout@v5
         with:
