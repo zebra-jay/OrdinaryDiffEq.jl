@@ -340,7 +340,7 @@ end
     # A smooth mass-matrix DAE can produce a near-zero first-order estimate at
     # startup. The subsequent controller update must still respect qmax rather
     # than jumping by hundreds or thousands in one step.
-    const C, L, R, V0 = 2e-3, 1e-5, 0.05, 2000.0
+    C, L, R, V0 = 2e-3, 1e-5, 0.05, 2000.0
     function f!(du, u, p, t)
         V, λ, I = u
         du[1] = -I / C
