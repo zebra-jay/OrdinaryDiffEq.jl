@@ -445,7 +445,10 @@ function stepsize_controller!(
         alpha0 = cache.bdf_coeffs[k, 1]
         q = ((6 * terk / (alpha0 * (k + 1)))^(1 / (k + 1)))
     end
-    return q
+    return clamp(
+        q, inv(get_current_qmax(integrator, get_qmax(integrator))),
+        inv(get_qmin(integrator))
+    )
 end
 
 function step_accept_controller!(integrator, alg::FBDF, q)

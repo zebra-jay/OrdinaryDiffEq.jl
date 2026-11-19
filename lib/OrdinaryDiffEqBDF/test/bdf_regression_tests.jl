@@ -334,3 +334,36 @@ end
         @test all(isapprox(sum(u[1:3]), 1; atol = 1.0e-8) for u in sol.u)
     end
 end
+
+
+@testset "FBDF limits startup step growth (#5003)" begin
+    # A smooth mass-matrix DAE can produce a near-zero first-order estimate at
+    # startup. The subsequent controller update must still respect qmax rather
+    # than jumping by hundreds or thousands in one step.
+    const C, L, R, V0 = 2e-3, 1e-5, 0.05, 2000.0
+    function f!(du, u, p, t)
+        V, λ, I = u
+        du[1] = -I / C
+        du[2] = V - R * I
+        du[3] = λ - L * I
+        return nothing
+    end
+    M = Diagonal([1.0, 1.0, 0.0])
+    prob = ODEProblem(ODEFunction(f!; mass_matrix = M), [V0, 0.0, 0.0], (0.0, 1e-4))
+
+    proposed_dts = Float64[]
+    cb = DiscreteCallback(
+        (u, t, integrator) -> true,
+        integrator -> push!(proposed_dts, abs(integrator.dt));
+        save_positions = (false, false)
+    )
+    qmax = 5.0
+    sol = solve(
+        prob, FBDF(qmax = qmax); reltol = 1e-6,
+        abstol = [1e-6, 1e-12, 1e-9], callback = cb
+    )
+    @test sol.retcode == ReturnCode.Success
+    @test length(proposed_dts) > 2
+    @test all(proposed_dts[i + 1] <= qmax * proposed_dts[i] * (1 + 1e-10)
+        for i in 1:(length(proposed_dts) - 1))
+end
