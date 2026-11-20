@@ -52,5 +52,5 @@ end
         expected /= 2
         @test integ.u ≈ expected atol = 1.0e-12
     end
-    @test integ.stats.nreject == 0
+    @test integ.stats.nnonlinconvfail == 0
 end
